@@ -1,0 +1,2 @@
+# PriceScout
+store product checker 
