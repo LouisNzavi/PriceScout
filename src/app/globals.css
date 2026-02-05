@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PriceScout Light Blue Design System – design tokens */
+:root {
+  --color-primary: #0077FF;
+  --color-primary-hover: #0A84FF;
+  --color-ink: #1C1C1E;
+  --color-body: #2C2C2E;
+  --color-neutral-100: #FFFFFF;
+  --color-neutral-50: #F5F7FA;
+  --color-divider: #E5EAF0;
+  --color-success: #34C759;
+  --color-warning: #FF9F0A;
+  --color-destructive: #FF3B30;
+  --focus-ring: 0 0 0 2px var(--color-primary-hover);
+  --shadow-panel: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --radius-panel: 12px;
+  --radius-button: 8px;
+  --spacing-scale: 4px;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-100 text-body antialiased;
+    font-size: 14px;
+  }
+  @media (min-width: 768px) {
+    body { font-size: 14px; }
+  }
+  h1 { @apply text-ink font-bold text-h1 md:text-h1-lg; }
+  h2 { @apply text-ink font-bold text-h2 md:text-h2-lg; }
+  h3 { @apply text-ink font-bold text-h3 md:text-h3-lg; }
+  /* WCAG AA focus ring */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary-hover);
+    outline-offset: 2px;
+  }
+}
+
+/* Constrain line length for readability */
+.prose-readable {
+  max-width: 70ch;
+}
