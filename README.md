@@ -33,6 +33,15 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Product:** 12-week price trend, alternatives, subscribe for alerts
 - **Basket:** Cheapest store summary, per-store totals, savings (MVP: top 20 staples)
 
+## Barcode lookup
+
+Users can **scan or type a barcode** (EAN-13/GTIN) on the Compare page to see which supermarket is cheaper for that exact product.
+
+- **Compare page:** “Or search by barcode” – enter 13 digits or scan (camera/scanner can fill the input).
+- **API:** `GET /api/search?barcode=5000112548167` returns exact product + retailer prices.
+- **Adding products:** In production, store `barcode` on `CanonicalProduct` and query by it. For the mock, add entries to `MOCK_BARCODE_PRODUCTS` in `src/app/api/search/route.ts` (e.g. `"5000112548167": { name: "Coca-Cola Classic", ... }`).
+- **Validation:** `src/lib/barcode.ts` – `normaliseBarcode`, `isValidEan13`, `formatBarcode`.
+
 ## Design system
 
 - **Primary:** #0077FF (hover #0A84FF)

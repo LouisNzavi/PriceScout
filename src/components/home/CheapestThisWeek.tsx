@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 
 /** "Cheapest this week" strip – cards linking to compare/product */
 const MOCK_ITEMS = [
-  { name: "Semi-skimmed milk 2L", retailer: "Asda", price: "£1.39", href: "/compare?q=milk" },
+  { name: "Semi-skimmed milk 2L", retailer: "Aldi", price: "£1.29", href: "/compare?q=milk" },
   { name: "White bread 800g", retailer: "Tesco", price: "£0.85", href: "/compare?q=bread" },
   { name: "Free range eggs x6", retailer: "Sainsbury's", price: "£1.75", href: "/compare?q=eggs" },
 ];

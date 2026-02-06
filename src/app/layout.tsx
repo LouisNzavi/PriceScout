@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "PriceScout – Cheapest UK supermarket prices this week",
   description:
-    "Track weekly price movements across Tesco, Sainsbury's and Asda. See the cheapest store per item and basket, with transparent unit pricing.",
+    "Track weekly price movements across Tesco, Sainsbury's, Asda and Aldi. See the cheapest store per item and basket, with transparent unit pricing.",
 };
 
 export default function RootLayout({

@@ -18,6 +18,9 @@ export interface PriceObservation {
   wowDelta?: number; // week-over-week change
 }
 
+/** EAN-13 / GTIN-13 barcode (e.g. 5000112548167). Used for exact product lookup and scan. */
+export type Barcode = string;
+
 export interface CanonicalProduct {
   id: string;
   name: string;
@@ -25,6 +28,8 @@ export interface CanonicalProduct {
   packSize?: string;
   imageUrl?: string;
   category?: string;
+  /** Exact barcode (EAN-13/GTIN) for scan & compare. */
+  barcode?: Barcode;
 }
 
 export interface ProductCompareRow extends CanonicalProduct {

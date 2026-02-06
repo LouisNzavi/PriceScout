@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Panel } from "@/components/ui/Panel";
 import { WoWChip } from "@/components/ui/WoWChip";
+import { formatBarcode } from "@/lib/barcode";
 
 /** Compare: product photo, brand, pack size, columns per retailer (pack price, unit price, loyalty badge, WoW chip). */
 interface CompareRow {
@@ -22,30 +23,46 @@ interface CompareRow {
   }[];
 }
 
-export function CompareTable({ query }: { query: string }) {
+export function CompareTable({ query, barcode }: { query: string; barcode?: string }) {
   const [rows, setRows] = useState<CompareRow[]>([]);
-  const [loading, setLoading] = useState(!!query);
+  const [matchedBarcode, setMatchedBarcode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const hasQuery = !!query || !!barcode;
 
   useEffect(() => {
-    if (!query) {
-      setRows([]);
-      setLoading(false);
+    if (barcode) {
+      setLoading(true);
+      setMatchedBarcode(null);
+      fetch(`/api/search?barcode=${encodeURIComponent(barcode)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setRows(data.results ?? []);
+          if (data.barcode) setMatchedBarcode(data.barcode);
+        })
+        .catch(() => setRows([]))
+        .finally(() => setLoading(false));
       return;
     }
-    setLoading(true);
-    fetch(`/api/search?q=${encodeURIComponent(query)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setRows(data.results ?? []);
-      })
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
-  }, [query]);
+    setMatchedBarcode(null);
+    if (query) {
+      setLoading(true);
+      fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setRows(data.results ?? []);
+        })
+        .catch(() => setRows([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+    setRows([]);
+    setLoading(false);
+  }, [query, barcode]);
 
-  if (!query) {
+  if (!hasQuery) {
     return (
       <Panel>
-        <p className="text-body">Enter a product name above to compare prices across Tesco, Sainsbury&apos;s and Asda.</p>
+        <p className="text-body">Enter a product name or barcode above to compare prices across Tesco, Sainsbury&apos;s, Asda and Aldi.</p>
       </Panel>
     );
   }
@@ -53,7 +70,7 @@ export function CompareTable({ query }: { query: string }) {
   if (loading) {
     return (
       <Panel>
-        <p className="text-body">Searching…</p>
+        <p className="text-body">{barcode ? "Looking up barcode…" : "Searching…"}</p>
       </Panel>
     );
   }
@@ -61,7 +78,11 @@ export function CompareTable({ query }: { query: string }) {
   if (rows.length === 0) {
     return (
       <Panel>
-        <p className="text-body">No results for &quot;{query}&quot;. Try another search.</p>
+        <p className="text-body">
+          {barcode
+            ? `No product found for barcode ${barcode}. Try another barcode or add it to our catalogue.`
+            : `No results for "${query}". Try another search.`}
+        </p>
       </Panel>
     );
   }
@@ -87,6 +108,9 @@ export function CompareTable({ query }: { query: string }) {
                 <div className="font-medium text-ink">{row.name}</div>
                 {row.brand && <div className="text-body text-xs">{row.brand}</div>}
                 {row.packSize && <div className="text-body text-xs">{row.packSize}</div>}
+                {matchedBarcode && (
+                  <div className="text-body text-xs font-mono mt-1">Barcode: {formatBarcode(matchedBarcode)}</div>
+                )}
               </td>
               {row.retailers.map((r) => (
                 <td key={r.retailerId} className="py-3 px-4 text-right">
