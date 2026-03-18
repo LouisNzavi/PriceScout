@@ -23,7 +23,15 @@ interface CompareRow {
   }[];
 }
 
-export function CompareTable({ query, barcode }: { query: string; barcode?: string }) {
+export function CompareTable({
+  query,
+  barcode,
+  loyaltyEnabled = true,
+}: {
+  query: string;
+  barcode?: string;
+  loyaltyEnabled?: boolean;
+}) {
   const [rows, setRows] = useState<CompareRow[]>([]);
   const [matchedBarcode, setMatchedBarcode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -114,11 +122,37 @@ export function CompareTable({ query, barcode }: { query: string; barcode?: stri
               </td>
               {row.retailers.map((r) => (
                 <td key={r.retailerId} className="py-3 px-4 text-right">
-                  <div className="tabular-nums font-semibold">£{r.packPrice.toFixed(2)}</div>
-                  <div className="text-body text-xs">{r.unitPrice.toFixed(2)} {r.unit}</div>
-                  {r.loyaltyPrice != null && (
-                    <div className="text-success text-xs">Loyalty £{r.loyaltyPrice.toFixed(2)}</div>
-                  )}
+                  {(() => {
+                    const hasLoyalty = r.loyaltyPrice != null;
+                    const showLoyaltyAsMain = loyaltyEnabled && hasLoyalty;
+                    const mainPrice = showLoyaltyAsMain ? r.loyaltyPrice! : r.packPrice;
+                    const secondaryPrice = showLoyaltyAsMain ? r.packPrice : r.loyaltyPrice;
+                    return (
+                      <>
+                        <div className="tabular-nums font-semibold">
+                          £{mainPrice.toFixed(2)}
+                          {showLoyaltyAsMain && (
+                            <span className="ml-1 text-success text-xs font-semibold align-middle">
+                              Loyalty
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-body text-xs">
+                          {r.unitPrice.toFixed(2)} {r.unit}
+                        </div>
+                        {secondaryPrice != null && (
+                          <div
+                            className={`text-xs ${
+                              showLoyaltyAsMain ? "text-body/80" : "text-success"
+                            }`}
+                          >
+                            {showLoyaltyAsMain ? "Base" : "Loyalty"} £
+                            {secondaryPrice.toFixed(2)}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   {r.wowDelta != null && <WoWChip delta={r.wowDelta} />}
                 </td>
               ))}

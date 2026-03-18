@@ -2,7 +2,7 @@
 
 **PriceScout** is a consumer web app that tracks weekly price movements across major UK supermarkets and shows the cheapest store per item and basket, with transparent unit pricing and loyalty toggle support.
 
-- **MVP retailers:** Tesco, Sainsbury's, Asda (expand to Morrisons and Aldi after launch).
+- **MVP retailers:** Tesco, Sainsbury's, Asda, Aldi (expand to Morrisons after launch).
 - **Data:** Blends first-party scraping with trusted third-party data collectors for speed, then migrates to in-house pipelines.
 
 ## Stack
@@ -25,6 +25,43 @@ Open [http://localhost:3000](http://localhost:3000).
 - `src/app/` – App Router pages (home, compare, product/[id], basket) and API routes
 - `src/components/` – UI (design system) and feature components (home, compare, product, basket)
 - `src/types/` – Shared TypeScript types
+
+## Feature list (UI-focused)
+
+### Search + scan
+
+- **Product search**: fast search box with query persistence via URL (`/compare?q=...`).
+- **Barcode lookup**: enter/scan **EAN-13/GTIN** and jump straight to an exact match (`/compare?barcode=...`).
+- **Zero-friction empty states**: clear guidance when no query is present; helpful message when nothing matches.
+
+### Compare (core experience)
+
+- **Per-retailer columns**: pack price + unit price shown together for quick scan.
+- **Loyalty price slot**: dedicated space for Clubcard/Nectar-style pricing (badge-style in UI; wire-ready).
+- **Week-over-week movement**: WoW change chip (mint for ↓ cheaper, coral for ↑ pricier).
+- **Numbers are readable**: tabular numerals, right-aligned numeric columns, zebra rows for scanning.
+
+### Home (discovery)
+
+- **“Cheapest this week” strip**: quick cards that deep-link into compare.
+- **Risers & fallers tables**: trend-led entry points for PR/SEO-style weekly digest content.
+
+### Product details
+
+- **12-week trend**: lightweight trend visual that can be replaced with a proper chart later.
+- **Alternatives + swaps**: placeholder section for future “swap to save” recommendations.
+- **Alerts CTA**: “Subscribe to alert” entry point (MVP: 1 free alert per user).
+
+### Basket (next step)
+
+- **Cheapest store summary**: structure ready for per-store totals and savings vs next best.
+- **Swap suggestions**: placeholder for “keep store / change item” style savings suggestions.
+
+### Trust, clarity, accessibility
+
+- **Unit pricing foregrounded**: designed to keep unit price visible and comparable.
+- **Accessible focus + contrast**: WCAG AA target; consistent focus ring and readable typography.
+- **Provenance ready**: API stubs are set up to attach “Observed online at {retailer} on {date}”.
 
 ## Screens
 

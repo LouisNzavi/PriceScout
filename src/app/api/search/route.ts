@@ -1,28 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { normaliseBarcode } from "@/lib/barcode";
+import { CATALOG, type CatalogProduct } from "@/app/api/search/catalog";
 
 /**
  * GET /api/search?q=...  (text search)
  * GET /api/search?barcode=...  (exact lookup by EAN-13/GTIN)
- * Stub: returns mock compare rows. Replace with FastAPI/backend or DB keyed by barcode.
+ * MVP: searches an in-repo product catalog. Replace with DB + ingestion pipelines.
  */
 
-const RETAILERS = [
-  { retailerId: "tesco", retailerName: "Tesco", packPrice: 1.25, unitPrice: 2.5, unit: "per kg", loyaltyPrice: 1.15, wowDelta: -2.1 },
-  { retailerId: "sainsburys", retailerName: "Sainsbury's", packPrice: 1.35, unitPrice: 2.7, unit: "per kg", loyaltyPrice: 1.25, wowDelta: 0.5 },
-  { retailerId: "asda", retailerName: "Asda", packPrice: 1.19, unitPrice: 2.38, unit: "per kg", wowDelta: -1.0 },
-  { retailerId: "aldi", retailerName: "Aldi", packPrice: 1.09, unitPrice: 2.18, unit: "per kg", wowDelta: -3.2 },
-] as const;
+function toRow(p: CatalogProduct) {
+  return {
+    productId: p.productId,
+    name: p.name,
+    brand: p.brand,
+    packSize: p.packSize,
+    barcode: p.barcode,
+    retailers: p.retailers,
+  };
+}
 
-/** Mock: exact barcode → product. In production, query CanonicalProduct + RetailerProduct by barcode. */
-const MOCK_BARCODE_PRODUCTS: Record<string, { name: string; brand?: string; packSize?: string }> = {
-  "5000112548167": { name: "Coca-Cola Classic", brand: "Coca-Cola", packSize: "500ml" },
-  "5010027000952": { name: "Semi-skimmed milk", brand: "Own brand", packSize: "2L" },
-  "8710448032082": { name: "White bread loaf", brand: "Warburtons", packSize: "800g" },
-};
+function normaliseQuery(q: string) {
+  return q.toLowerCase().trim().replace(/\s+/g, " ");
+}
 
-function mockRow(productId: string, name: string, brand?: string, packSize?: string, retailers = RETAILERS) {
-  return { productId, name, brand, packSize, retailers: retailers as unknown as typeof RETAILERS };
+function tokenize(q: string) {
+  return normaliseQuery(q)
+    .split(" ")
+    .filter((t) => t.length >= 2 && !["the", "and", "for", "with", "pack"].includes(t));
+}
+
+function scoreProduct(qTokens: string[], p: CatalogProduct) {
+  const hay = normaliseQuery(
+    [p.name, p.brand, p.packSize, ...(p.synonyms ?? [])].filter(Boolean).join(" ")
+  );
+  let score = 0;
+  for (const t of qTokens) {
+    if (hay.includes(t)) score += 2;
+  }
+  // Prefix boost
+  if (hay.startsWith(qTokens.join(" "))) score += 2;
+  return score;
 }
 
 export async function GET(request: NextRequest) {
@@ -32,22 +49,29 @@ export async function GET(request: NextRequest) {
   // Exact barcode lookup (takes precedence)
   if (barcodeParam) {
     const barcode = normaliseBarcode(barcodeParam);
-    const product = MOCK_BARCODE_PRODUCTS[barcode];
-    if (product) {
-      return NextResponse.json({
-        results: [mockRow(`barcode-${barcode}`, product.name, product.brand, product.packSize)],
-        barcode,
-      });
-    }
-    return NextResponse.json({ results: [], barcode });
+    const hit = CATALOG.find((p) => p.barcode === barcode);
+    return NextResponse.json(
+      { results: hit ? [toRow(hit)] : [], barcode },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   }
 
   // Text search
   if (!q) return NextResponse.json({ results: [] });
 
-  const mockResults = [
-    mockRow("mock-1", `${q} (example result)`, "Brand", "500g"),
-  ];
+  const tokens = tokenize(q);
+  const results = CATALOG.map((p) => ({ p, score: scoreProduct(tokens, p) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((x) => toRow(x.p));
 
-  return NextResponse.json({ results: mockResults });
+  return NextResponse.json(
+    { results },
+    { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120" } }
+  );
 }
